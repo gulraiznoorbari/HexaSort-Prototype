@@ -3,7 +3,7 @@ using UnityEngine;
 public class Tile : MonoBehaviour
 {
     private bool dragging, placed;
-    private Camera camera;
+    private Camera cam;
     private Vector3 offset;
     private Vector3 originalPosition;
     private Vector3 tileSize;
@@ -12,14 +12,13 @@ public class Tile : MonoBehaviour
     {
         originalPosition = transform.position;
         tileSize = transform.localScale;
-        camera = Camera.main;
+        cam = Camera.main;
     }
 
     private void FixedUpdate()
     {
         if (!dragging) return;
         transform.position = GetSnappedPosition();
-        //transform.position = new Vector3(GetMousePosition().x - offset.x, 0.5f, GetMousePosition().z - offset.z);
     }
 
     private void OnMouseDown()
@@ -31,7 +30,6 @@ public class Tile : MonoBehaviour
     private void OnMouseUp()
     {
         dragging = false;
-        //transform.position = originalPosition;
         SnapToGrid();
     }
 
@@ -40,15 +38,25 @@ public class Tile : MonoBehaviour
         Vector3 mousePosition = GetMousePosition();
         float snapX = Mathf.Round(mousePosition.x / tileSize.x) * tileSize.x;
         float snapZ = Mathf.Round(mousePosition.z / tileSize.z) * tileSize.z;
-        return new Vector3(snapX, 0.4f, snapZ);
+        return new Vector3(snapX, 0.27f, snapZ);
     }
 
     private void SnapToGrid()
     {
+        if (placed) return;
         Vector3 snappedPosition = GetSnappedPosition();
-        if (GridManager.instance.IsCellEmpty(snappedPosition))
+        if (GridManager.instance.IsCellEmptyAndInbounds(snappedPosition))
         {
+            transform.parent = null;
             transform.position = snappedPosition;
+            Cell cell = GridManager.instance.GetCellAtPosition(snappedPosition);
+            if (cell != null)
+            {
+                transform.parent = cell.transform;
+                placed = true;
+                GridManager.instance.MarkCellOccupied(snappedPosition);
+                GridManager.instance.CheckNeighborsForColorMatch(snappedPosition);
+            } 
             TilesSpawner.instance.RemoveFromAvailableTilesList(gameObject);
         }
         else
@@ -59,7 +67,7 @@ public class Tile : MonoBehaviour
 
     private Vector3 GetMousePosition()
     {
-        Ray ray = camera.ScreenPointToRay(Input.mousePosition);
+        Ray ray = cam.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit))
