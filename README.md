@@ -4,4 +4,4 @@
 
 - [x] Grid Generation
 - [x] Item Placements
-- [x] Matching
+- [x] Tile Matching
