@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class Tile : MonoBehaviour
@@ -57,11 +58,11 @@ public class Tile : MonoBehaviour
                 transform.parent = cell.transform;
                 placed = true;
                 GridManager.instance.MarkCellOccupied(snappedPosition);
-                bool isColorMatched = GridManager.instance.CheckNeighborsForColorMatch(snappedPosition, currentTileColor);
-                if (isColorMatched)
+                Vector3? matchedPosition = GridManager.instance.CheckNeighborsForColorMatch(snappedPosition, currentTileColor);
+                if (matchedPosition.HasValue)
                 {
                     GridManager.instance.MarkCellUnOccupied(snappedPosition);
-                    Destroy(gameObject);
+                    StartCoroutine(MoveToNeighborAndDestroy(matchedPosition.Value));
                 }
             } 
             TilesSpawner.instance.RemoveFromAvailableTilesList(gameObject);
@@ -70,6 +71,27 @@ public class Tile : MonoBehaviour
         {
             transform.position = originalPosition;
         }
+    }
+
+    private IEnumerator MoveToNeighborAndDestroy(Vector3 targetPosition)
+    {
+        float duration = 0.5f;
+        Vector3 startPosition = transform.position;
+        Vector3 endPosition = new Vector3(targetPosition.x, targetPosition.y + 0.5f, targetPosition.z);
+
+        float elapsedTime = 0f;
+        while (elapsedTime < duration)
+        {
+            transform.position = Vector3.Lerp(startPosition, endPosition, elapsedTime / duration);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+        // small delay when reached on above of matched tile:
+        yield return new WaitForSeconds(0.2f);
+
+        GameObject matchedTile = GridManager.instance.GetTileAtPosition(targetPosition);
+        if (matchedTile != null) Destroy(matchedTile);
+        Destroy(gameObject);
     }
 
     private Vector3 GetMousePosition()

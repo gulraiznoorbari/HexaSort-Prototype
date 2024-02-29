@@ -53,9 +53,11 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    public bool CheckNeighborsForColorMatch(Vector3 currentTilePosition, Color currentTileColor)
+    public Vector3? CheckNeighborsForColorMatch(Vector3 currentTilePosition, Color currentTileColor)
     {
-        bool matchFound = false;
+        // Vector3? = nullable vector
+        Vector3? matchedPosition = null;
+
         // Check immediate neighbors (up, down, left, right) and diagonals:
         Vector3[] directions = {
             Vector3.forward, Vector3.back, Vector3.left, Vector3.right,
@@ -78,24 +80,39 @@ public class GridManager : MonoBehaviour
                         // Check if the neighbor tile has the same color as current selected tile:
                         if (neighborTileColor == currentTileColor)
                         {
-                            Destroy(neighborTile.gameObject);
-                            matchFound = true;
+                            matchedPosition = neighborPosition;
+                            break; // Assuming only one match for simplicity.
                         }
                     }
                 }
             }
         }
-        return matchFound;
+        return matchedPosition;
     }
 
     public Cell GetCellAtPosition(Vector3 position)
     {
         RaycastHit hit;
-        if (Physics.Raycast(position + Vector3.up * 10f, Vector3.down, out hit, 50f, _gridCellLayer))
+        if (Physics.Raycast(position + Vector3.up * 10f, Vector3.down, out hit, 20f, _gridCellLayer))
         {
             return hit.collider.GetComponent<Cell>();
         }
         return null;
+    }
+
+    public GameObject GetTileAtPosition(Vector3 position)
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(position + Vector3.up * 10f, Vector3.down, out hit, 20f, _gridCellLayer))
+        {
+            Cell cell = hit.collider.GetComponent<Cell>();
+            if (cell != null && cell.transform.childCount > 0)
+            {
+                // first child of the cell is the Tile game object:
+                return cell.transform.GetChild(0).gameObject;
+            }
+        }
+        return null; 
     }
 
     public void MarkCellOccupied(Vector3 position)

@@ -392,6 +392,9 @@ MonoBehaviour:
   _gridCellLayer:
     serializedVersion: 2
     m_Bits: 8
+  _gridTileLayer:
+    serializedVersion: 2
+    m_Bits: 64
   _rows: 7
   _columns: 7
 --- !u!4 &1598511433
