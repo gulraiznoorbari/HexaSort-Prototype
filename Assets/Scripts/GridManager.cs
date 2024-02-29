@@ -53,8 +53,9 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    public void CheckNeighborsForColorMatch(Vector3 currentTilePosition)
+    public bool CheckNeighborsForColorMatch(Vector3 currentTilePosition, Color currentTileColor)
     {
+        bool matchFound = false;
         // Check immediate neighbors (up, down, left, right) and diagonals:
         Vector3[] directions = {
             Vector3.forward, Vector3.back, Vector3.left, Vector3.right,
@@ -65,28 +66,26 @@ public class GridManager : MonoBehaviour
         foreach (Vector3 direction in directions)
         {
             Vector3 neighborPosition = currentTilePosition + direction;
-            bool isCellEmptyAndInbounds = IsCellEmptyAndInbounds(neighborPosition);
-            Debug.Log(isCellEmptyAndInbounds);
-            // If the neighboring cell is not empty and within bounds:
-            if (!isCellEmptyAndInbounds)
+            if (IsCellEmptyAndInbounds(neighborPosition))
             {
                 Cell neighborCell = GetCellAtPosition(neighborPosition);
                 if (neighborCell != null && neighborCell.transform.childCount > 0)
                 {
                     Tile neighborTile = neighborCell.transform.GetChild(0).GetComponent<Tile>();
-                    if (neighborTile != null && neighborTile.gameObject != gameObject)
+                    if (neighborTile != null)
                     {
-                        // Check if the neighbor tile has the same color:
-                        if (neighborTile.GetComponent<Renderer>().material.color == GetComponent<Renderer>().material.color)
+                        Color neighborTileColor = neighborTile.GetComponent<MeshRenderer>().material.color;
+                        // Check if the neighbor tile has the same color as current selected tile:
+                        if (neighborTileColor == currentTileColor)
                         {
                             Destroy(neighborTile.gameObject);
-                            Destroy(gameObject);
-                            return;
+                            matchFound = true;
                         }
                     }
                 }
             }
         }
+        return matchFound;
     }
 
     public Cell GetCellAtPosition(Vector3 position)
@@ -107,6 +106,14 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    public void MarkCellUnOccupied(Vector3 position)
+    {
+        if (occupiedCells.ContainsKey(position))
+        {
+            occupiedCells[position] = false;
+        }
+    }
+
     public bool IsCellEmptyAndInbounds(Vector3 position)
     {
         // Check if the position is within the bounds of the grid:
@@ -114,7 +121,6 @@ public class GridManager : MonoBehaviour
         {
             return false;
         }
-
         // Check if the position exists in the dictionary, if not, consider it as empty:
         bool isCellEmpty;
         if (!occupiedCells.TryGetValue(position, out isCellEmpty))

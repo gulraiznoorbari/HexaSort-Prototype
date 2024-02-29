@@ -7,6 +7,7 @@ public class Tile : MonoBehaviour
     private Vector3 offset;
     private Vector3 originalPosition;
     private Vector3 tileSize;
+    private Color currentTileColor;
 
     private void Start()
     {
@@ -24,6 +25,7 @@ public class Tile : MonoBehaviour
     private void OnMouseDown()
     {
         dragging = true;
+        currentTileColor = gameObject.GetComponent<MeshRenderer>().material.color;
         offset = GetMousePosition() - transform.position;
     }
 
@@ -55,7 +57,12 @@ public class Tile : MonoBehaviour
                 transform.parent = cell.transform;
                 placed = true;
                 GridManager.instance.MarkCellOccupied(snappedPosition);
-                GridManager.instance.CheckNeighborsForColorMatch(snappedPosition);
+                bool isColorMatched = GridManager.instance.CheckNeighborsForColorMatch(snappedPosition, currentTileColor);
+                if (isColorMatched)
+                {
+                    GridManager.instance.MarkCellUnOccupied(snappedPosition);
+                    Destroy(gameObject);
+                }
             } 
             TilesSpawner.instance.RemoveFromAvailableTilesList(gameObject);
         }
@@ -69,7 +76,6 @@ public class Tile : MonoBehaviour
     {
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
-
         if (Physics.Raycast(ray, out hit))
         {
             return hit.point;
