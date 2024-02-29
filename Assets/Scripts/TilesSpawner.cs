@@ -6,8 +6,8 @@ public class TilesSpawner : MonoBehaviour
     [SerializeField] private Transform[] _spawnPoints;
     [SerializeField] private GameObject[] _tilesPrefabs;
 
-    private GameObject[] _availableTilesPrefabs;
-    
+    private List<GameObject> _availableTilesPrefabs = new List<GameObject>();
+
     public static TilesSpawner instance;
 
     private void Awake()
@@ -18,66 +18,43 @@ public class TilesSpawner : MonoBehaviour
         }
         else
         {
-            Destroy(this);
+            Destroy(gameObject);
             return;
         }
     }
 
     private void Start()
     {
+        InitializeAvailableTilesPrefabs();
         SpawnTiles();
+    }
+
+    private void InitializeAvailableTilesPrefabs()
+    {
+        _availableTilesPrefabs.Clear();
+        _availableTilesPrefabs.AddRange(_tilesPrefabs); 
     }
 
     private void SpawnTiles()
     {
         for (int i = 0; i < _spawnPoints.Length; i++)
         {
-            //int randomIndex = Random.Range(0, _tilesPrefabs.Length);
-            GameObject obj = Instantiate(_tilesPrefabs[i], _spawnPoints[i]);
-            obj.name = _tilesPrefabs[i].name;
-        }
-        _availableTilesPrefabs = _tilesPrefabs;
-    }
-
-    private int FindIndexByName(string gameObjectName)
-    {
-        int index = -1;
-        for (int i = 0; i < _availableTilesPrefabs.Length; i++)
-        {
-            if (_availableTilesPrefabs[i].name == gameObjectName)
+            if (i < _availableTilesPrefabs.Count)
             {
-                index = i;
-                break;
+                GameObject obj = Instantiate(_availableTilesPrefabs[i], _spawnPoints[i]);
+                obj.name = _availableTilesPrefabs[i].name;
             }
-        }
-        return index;
-    }
-
-    private void RemoveByIndex(int index)
-    {
-        if (index >= 0 && index < _availableTilesPrefabs.Length)
-        {
-            List<GameObject> tempList = new List<GameObject>(_availableTilesPrefabs);
-            tempList.RemoveAt(index);
-            _availableTilesPrefabs = tempList.ToArray();
         }
     }
 
     public void RemoveFromAvailableTilesList(GameObject gameObject)
     {
-        int index = FindIndexByName(gameObject.name);
-        if (index != -1)
+        _availableTilesPrefabs.RemoveAll(tilePrefab => tilePrefab.name == gameObject.name);
+
+        if (_availableTilesPrefabs.Count == 0)
         {
-            RemoveByIndex(index);
-            if (_availableTilesPrefabs.Length == 0)
-            {
-                SpawnTiles();
-            }
-        }
-        else
-        {
-            Debug.LogWarning("GameObject not found: " + gameObject.name);
+            InitializeAvailableTilesPrefabs();
+            SpawnTiles();
         }
     }
-
 }
