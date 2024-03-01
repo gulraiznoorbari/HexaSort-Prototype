@@ -88,11 +88,14 @@ public class Tile : MonoBehaviour
         }
         // small delay when reached on above of matched tile:
         yield return new WaitForSeconds(0.2f);
-
-        GridManager.instance.MarkCellUnOccupied(targetPosition);
+        
         GameObject matchedTile = GridManager.instance.GetTileAtPosition(targetPosition);
-        if (matchedTile != null) Destroy(matchedTile);
-        Destroy(gameObject);
+        if (matchedTile != null)
+        {
+            GridManager.instance.MarkCellUnOccupied(targetPosition);
+            Destroy(matchedTile);
+            Destroy(gameObject);
+        }
     }
 
     private Vector3 GetMousePosition()
